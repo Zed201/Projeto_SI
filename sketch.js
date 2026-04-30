@@ -26,6 +26,8 @@ const LEGEND_Y = UI_PADDING;
 
 // Estado global do sketch.
 let grid;
+let gridmap;
+
 let sizeSlider;
 let rowSlider;
 let colSlider;
@@ -85,6 +87,10 @@ function setup() {
   // Cria o grid.
   grid = new Grid(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
   randomizeGrid();
+
+  gridmap = new GridMap(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
+  gridmap.setMarker(2,2);
+  gridmap.setLineShade(2, 2, 8, 0.5)
 
   // Cria sliders.
   sizeSlider = createSlider(CELL_SIZE_MIN, CELL_SIZE_MAX, CELL_SIZE_DEFAULT, 1);
@@ -148,6 +154,7 @@ function draw() {
   background(240);
   // Renderiza o grid.
   grid.render();
+  gridmap.render();
 
   // Desenha a area da legenda lateral.
   noStroke();
