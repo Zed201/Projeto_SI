@@ -19,55 +19,32 @@ class Cell {
     return palette[index];
   }
 
-  // Converte um p5.Color em string RGBA para uso no canvas 2D.
-  static toRgba(col, alpha) {
-    return `rgba(${Math.round(red(col))}, ${Math.round(green(col))}, ${Math.round(blue(col))}, ${alpha})`;
-  }
-
   // Render complexo com gradiente, sombra e textura baseada no valor.
   // apenas para um efeito legal
   render(x, y, size) {
     // Calcula cores base, clara e escura para o gradiente.
-    const base = this.getBaseColor();
-    const light = lerpColor(base, color(255), 0.35);
-    const dark = lerpColor(base, color(0), 0.35);
-    // Usa o contexto 2D do canvas para criar o gradiente e a sombra.
-    const ctx = drawingContext;
-    const radius = size * 0.18;
-
-    // Desenha o bloco principal com gradiente e glow.
-    push();
-    ctx.save();
-    const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
-    gradient.addColorStop(0, Cell.toRgba(light, 0.95));
-    gradient.addColorStop(1, Cell.toRgba(dark, 0.95));
-    ctx.fillStyle = gradient;
-    ctx.shadowBlur = size * 0.25;
-    ctx.shadowColor = Cell.toRgba(base, 0.55);
+    const base = this.getBaseColor()
+    fill(base);
     noStroke();
-    rect(x, y, size, size, radius);
-    ctx.restore();
+    rect(x, y, size, size);
 
     // Adiciona um contorno interno para destaque.
     noFill();
-    stroke(lerpColor(base, color(255), 0.5));
+    stroke(255,255,255);
     strokeWeight(max(1, size * 0.05));
-    rect(x + size * 0.06, y + size * 0.06, size * 0.88, size * 0.88, radius * 0.8);
-
-    // Aplica pequenos brilhos usando noise para textura.
-    noStroke();
-    for (let i = 0; i < 8; i += 1) {
-      const nx = noise((x + i * 13) * 0.08, (y + i * 7) * 0.08, this.value * 0.3);
-      const ny = noise((x + i * 5) * 0.08, (y + i * 11) * 0.08, this.value * 0.5);
-      const px = x + nx * size;
-      const py = y + ny * size;
-      const alpha = 30 + 60 * noise((x + i * 17) * 0.05, (y + i * 19) * 0.05, this.value * 0.7);
-      fill(255, alpha);
-      circle(px, py, size * 0.08);
-    }
-
-    pop();
+    rect(x + size * 0.01, y + size * 0.01, size * 0.99, size * 0.99);
   }
+}
+
+
+// celular para o mapa onde teremos a bolinha e os shade para mostrar o mapeamento
+class CellMap extends Cell {
+// vai ter um render diferente, de 2 valores apenas, um uma bolinha e outro um filtro por cima da render do grid normal
+}
+
+// classe de grid que usa o cell map
+class GridMap extends Grid {
+
 }
 
 // Representa o grid como matriz de celulas.

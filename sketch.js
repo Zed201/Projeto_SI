@@ -1,19 +1,22 @@
 // Configuracao inicial e limites do grid.
-const GRID_ROWS_DEFAULT = 8;
-const GRID_COLS_DEFAULT = 12;
+const GRID_ROWS_DEFAULT = 14;
+const GRID_COLS_DEFAULT = 14;
 const GRID_ROWS_MIN = 1;
 const GRID_ROWS_MAX = 20;
 const GRID_COLS_MIN = 1;
 const GRID_COLS_MAX = 20;
 // Tamanho das celulas (pixels).
-const CELL_SIZE_DEFAULT = 32;
+const CELL_SIZE_DEFAULT = 48;
 const CELL_SIZE_MIN = 16;
 const CELL_SIZE_MAX = 48;
 // Parametros de layout da legenda/controles.
 const UI_PADDING = 10;
 const LEGEND_ROW_GAP = 26;
 const LEGEND_LABEL_OFFSET = 70;
-const LEGEND_WIDTH = 220;
+const LEGEND_WIDTH = 300;
+const BUTTON_WIDTH = 120;
+const BUTTON_HEIGHT = 32;
+const BUTTON_GAP = 8;
 const GRID_MAX_WIDTH = GRID_COLS_MAX * CELL_SIZE_MAX;
 const GRID_MAX_HEIGHT = GRID_ROWS_MAX * CELL_SIZE_MAX;
 const CANVAS_WIDTH = GRID_MAX_WIDTH + LEGEND_WIDTH;
@@ -27,6 +30,8 @@ let sizeSlider;
 let rowSlider;
 let colSlider;
 let container;
+let resetBtn;
+let randomBtn;
 
 // Atualiza o tamanho das celulas quando o slider muda.
 function updateCellSize() {
@@ -42,7 +47,25 @@ function updateGridDimensions() {
 function fillGridPattern() {
   for (let r = 0; r < grid.rows; r += 1) {
     for (let c = 0; c < grid.cols; c += 1) {
-      grid.setElement(r, c, (r + c) % 10);
+      grid.setElement(r, c, 1);
+    }
+  }
+}
+
+// Botões e funções de controle.
+function onResetClick() {
+  // TODO: Implementar reset do grid
+}
+
+function onRandomClick() {
+  randomizeGrid();
+}
+
+function randomizeGrid() {
+  for (let r = 0; r < grid.rows; r += 1) {
+    for (let c = 0; c < grid.cols; c += 1) {
+      const randomValue = Math.floor(Math.random() * 6);
+      grid.setElement(r, c, randomValue);
     }
   }
 }
@@ -61,7 +84,7 @@ function setup() {
 
   // Cria o grid.
   grid = new Grid(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
-  fillGridPattern();
+  randomizeGrid();
 
   // Cria sliders.
   sizeSlider = createSlider(CELL_SIZE_MIN, CELL_SIZE_MAX, CELL_SIZE_DEFAULT, 1);
@@ -87,13 +110,42 @@ function setup() {
   sizeSlider.input(updateCellSize);
   rowSlider.input(updateGridDimensions);
   colSlider.input(updateGridDimensions);
+
+  // Cria botões de controle.
+  resetBtn = createButton("Reset");
+  randomBtn = createButton("Random");
+
+  // Coloca botões dentro do container.
+  resetBtn.parent(container);
+  randomBtn.parent(container);
+
+  // Posiciona botões na area da legenda.
+  const buttonsY = LEGEND_Y + LEGEND_ROW_GAP * 3 + 15;
+  resetBtn.position(LEGEND_X, buttonsY);
+  randomBtn.position(LEGEND_X, buttonsY + BUTTON_HEIGHT + BUTTON_GAP);
+
+  // Estila botões.
+  [resetBtn, randomBtn].forEach(btn => {
+    btn.style("width", `${BUTTON_WIDTH}px`);
+    btn.style("height", `${BUTTON_HEIGHT}px`);
+    btn.style("background-color", "#4CAF50");
+    btn.style("color", "white");
+    btn.style("border", "none");
+    btn.style("border-radius", "4px");
+    btn.style("font-size", "14px");
+    btn.style("font-weight", "bold");
+    btn.style("cursor", "pointer");
+    btn.style("transition", "background-color 0.3s");
+  });
+
+  // Liga eventos dos botões.
+  resetBtn.mousePressed(onResetClick);
+  randomBtn.mousePressed(onRandomClick);
 }
 
 // Loop de renderizacao.
 function draw() {
-  background(220);
-  // Atualiza o padrao antes de renderizar.
-  fillGridPattern();
+  background(240);
   // Renderiza o grid.
   grid.render();
 
