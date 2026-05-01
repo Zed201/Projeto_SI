@@ -38,6 +38,7 @@ class Cell {
 
 
 // celular para o mapa onde teremos a bolinha e os shade para mostrar o mapeamento
+// TODO: Trocar o nome
 class CellMap extends Cell {
   constructor(hasMarker = false, shadeIntensity = 0) {
     super(0);
@@ -160,7 +161,15 @@ class AlgorithmGrid extends Grid {
       }
       this.cells.push(row);
     }
-    this.connections = new Set();
+    this.connections = [];
+    this.markerRow = 0;
+    this.markerCol = 0;
+    this.markerNextRow = 0;
+    this.markerNextCol = 0;
+    this.markerPrevRow = -1;
+    this.markerPrevCol = -1;
+    this.markerProgress = 0;
+    this.markerBaseSpeed = 0.05;
   }
 
   // Renderiza os filtros, marcadores e linhas de conexão
@@ -187,19 +196,18 @@ class AlgorithmGrid extends Grid {
   }
 
   renderMarkers() {
-    for (let r = 0; r < this.rows; r += 1) {
-      for (let c = 0; c < this.cols; c += 1) {
-        const x = c * this.cellSize;
-        const y = r * this.cellSize;
-        const cell = this.cells[r][c];
+    // Renderiza bolinha na posição interpolada se há movimento
+    const x1 = this.markerCol * this.cellSize + this.cellSize / 2;
+    const y1 = this.markerRow * this.cellSize + this.cellSize / 2;
+    const x2 = this.markerNextCol * this.cellSize + this.cellSize / 2;
+    const y2 = this.markerNextRow * this.cellSize + this.cellSize / 2;
 
-        if (cell.hasMarker) {
-          fill(255, 50, 50);
-          noStroke();
-          circle(x + this.cellSize / 2, y + this.cellSize / 2, this.cellSize * 0.4);
-        }
-      }
-    }
+    const x = x1 + (x2 - x1) * this.markerProgress;
+    const y = y1 + (y2 - y1) * this.markerProgress;
+
+    fill(255, 50, 50);
+    noStroke();
+    circle(x, y, this.cellSize * 0.4);
   }
 
   renderCells() {
@@ -236,24 +244,29 @@ class AlgorithmGrid extends Grid {
       return;
     }
     const key = this.getConnectionKey(row1, col1, row2, col2);
-    this.connections.add(key);
+    if (!this.connections.includes(key)) {
+      this.connections.push(key);
+    }
   }
 
   // Remove uma conexão entre duas células
   removeConnection(row1, col1, row2, col2) {
     const key = this.getConnectionKey(row1, col1, row2, col2);
-    this.connections.delete(key);
+    const index = this.connections.indexOf(key);
+    if (index > -1) {
+      this.connections.splice(index, 1);
+    }
   }
 
   // Verifica se existe conexão entre duas células
   hasConnection(row1, col1, row2, col2) {
     const key = this.getConnectionKey(row1, col1, row2, col2);
-    return this.connections.has(key);
+    return this.connections.includes(key);
   }
 
   // Limpa todas as conexões
   clearConnections() {
-    this.connections.clear();
+    this.connections = [];
   }
 
   // Retorna chave única para uma conexão (ordem normalizada)
@@ -332,6 +345,66 @@ class AlgorithmGrid extends Grid {
       for (let c = 0; c < this.cols; c += 1) {
         this.setShade(r, c, 0);
       }
+    }
+  }
+
+  // Define a velocidade base da bolinha (0 a 1, onde 1 é mais rápido)
+  setMarkerSpeed(speed) {
+    this.markerBaseSpeed = Math.max(0, Math.min(1, speed));
+  }
+
+  // Retorna o modificador de velocidade baseado no value da célula
+  getSpeedModifier(row, col) {
+    const cell = this.getElement(row, col);
+    if (!cell) return 1;
+    return Math.max(0.1, 1 / (Math.abs(cell.value) * 0.5 + 1));
+  }
+
+  // Move a bolinha ao longo das linhas de conexão
+  updateMarker() {
+    if (this.markerProgress >= 1) {
+      this.markerPrevRow = this.markerRow;
+      this.markerPrevCol = this.markerCol;
+      this.markerRow = this.markerNextRow;
+      this.markerCol = this.markerNextCol;
+
+      // Encontra próxima célula conectada (evita voltar para a anterior)
+      const neighbors = [
+        [this.markerRow - 1, this.markerCol],
+        [this.markerRow + 1, this.markerCol],
+        [this.markerRow, this.markerCol - 1],
+        [this.markerRow, this.markerCol + 1],
+      ];
+
+      let foundNext = false;
+      for (const [r, c] of neighbors) {
+        if (r === this.markerPrevRow && c === this.markerPrevCol) continue;
+        if (this.hasConnection(this.markerRow, this.markerCol, r, c)) {
+          this.markerNextRow = r;
+          this.markerNextCol = c;
+          this.markerProgress = 0;
+          foundNext = true;
+          break;
+        }
+      }
+
+      if (!foundNext) {
+        this.markerProgress = 0;
+      }
+    }
+
+    const speedMod = this.getSpeedModifier(this.markerRow, this.markerCol);
+    this.markerProgress += this.markerBaseSpeed * speedMod;
+  }
+
+  // Define a posição inicial da bolinha
+  setMarkerStartPosition(row, col) {
+    if (this.inBounds(row, col)) {
+      this.markerRow = row;
+      this.markerCol = col;
+      this.markerNextRow = row;
+      this.markerNextCol = col;
+      this.markerProgress = 0;
     }
   }
 }

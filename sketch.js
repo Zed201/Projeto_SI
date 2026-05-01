@@ -66,8 +66,24 @@ function onRandomClick() {
 function randomizeGrid() {
   for (let r = 0; r < grid.rows; r += 1) {
     for (let c = 0; c < grid.cols; c += 1) {
-      const randomValue = Math.floor(Math.random() * 6);
+      const randomValue = Math.floor(Math.random() * 10);
       grid.setElement(r, c, randomValue);
+    }
+  }
+  if (gridmap) {
+    syncGridValues();
+  }
+}
+
+// Copia os valores do grid principal para o gridmap
+function syncGridValues() {
+  for (let r = 0; r < grid.rows; r += 1) {
+    for (let c = 0; c < grid.cols; c += 1) {
+      const value = grid.getElement(r, c).value;
+      const cell = gridmap.getElement(r, c);
+      if (cell) {
+        cell.value = value;
+      }
     }
   }
 }
@@ -89,9 +105,32 @@ function setup() {
   randomizeGrid();
 
   gridmap = new AlgorithmGrid(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
-  gridmap.setMarker(2,2);
-  gridmap.setLineShade(2, 2, 8, 0.5)
+  gridmap.setMarkerStartPosition(2, 2);
+
+  // Sincroniza valores do grid principal
+  syncGridValues();
+
+  // Criar um percurso maior em forma de retângulo
   gridmap.addConnection(2, 2, 2, 3);
+  gridmap.addConnection(2, 3, 2, 4);
+  gridmap.addConnection(2, 4, 2, 5);
+  gridmap.addConnection(2, 5, 3, 5);
+  gridmap.addConnection(3, 5, 4, 5);
+  gridmap.addConnection(4, 5, 5, 5);
+  gridmap.addConnection(5, 5, 5, 4);
+  gridmap.addConnection(5, 4, 5, 3);
+  gridmap.addConnection(5, 3, 5, 2);
+  gridmap.addConnection(5, 2, 4, 2);
+  gridmap.addConnection(4, 2, 3, 2);
+  gridmap.addConnection(3, 2, 2, 2);
+
+  // Shade nos caminhos
+  gridmap.setLineShade(2, 2, 5, 0.2);
+  gridmap.setColumnShade(2, 5, 5, 0.2);
+  gridmap.setLineShade(5, 2, 5, 0.2);
+  gridmap.setColumnShade(3, 4, 2, 0.2);
+
+  gridmap.setMarkerSpeed(0.05);
 
   // Cria sliders.
   sizeSlider = createSlider(CELL_SIZE_MIN, CELL_SIZE_MAX, CELL_SIZE_DEFAULT, 1);
@@ -155,6 +194,7 @@ function draw() {
   background(240);
   // Renderiza o grid.
   grid.render();
+  gridmap.updateMarker();
   gridmap.render();
 
   // Desenha a area da legenda lateral.
