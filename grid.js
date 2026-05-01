@@ -147,8 +147,8 @@ class Grid {
   }
 }
 
-// classe de grid que usa o cell map
-class GridMap extends Grid {
+// Grid com linhas de conexão entre células
+class AlgorithmGrid extends Grid {
   constructor(rows, cols, cellSize) {
     super(rows, cols, cellSize);
     // Reconstrói o grid com CellMap ao invés de Cell
@@ -160,10 +160,49 @@ class GridMap extends Grid {
       }
       this.cells.push(row);
     }
+    this.connections = new Set();
   }
 
-  // Renderiza apenas os filtros por cima (marcador + shade), sem a cor base
+  // Renderiza os filtros, marcadores e linhas de conexão
   render() {
+    this.renderShade();
+    this.renderConnections();
+    this.renderMarkers();
+  }
+
+  renderShade() {
+    for (let r = 0; r < this.rows; r += 1) {
+      for (let c = 0; c < this.cols; c += 1) {
+        const x = c * this.cellSize;
+        const y = r * this.cellSize;
+        const cell = this.cells[r][c];
+
+        if (cell.shadeIntensity > 0) {
+          fill(0, 0, 0, cell.shadeIntensity * 255);
+          noStroke();
+          rect(x, y, this.cellSize, this.cellSize);
+        }
+      }
+    }
+  }
+
+  renderMarkers() {
+    for (let r = 0; r < this.rows; r += 1) {
+      for (let c = 0; c < this.cols; c += 1) {
+        const x = c * this.cellSize;
+        const y = r * this.cellSize;
+        const cell = this.cells[r][c];
+
+        if (cell.hasMarker) {
+          fill(255, 50, 50);
+          noStroke();
+          circle(x + this.cellSize / 2, y + this.cellSize / 2, this.cellSize * 0.4);
+        }
+      }
+    }
+  }
+
+  renderCells() {
     for (let r = 0; r < this.rows; r += 1) {
       for (let c = 0; c < this.cols; c += 1) {
         const x = c * this.cellSize;
@@ -184,6 +223,63 @@ class GridMap extends Grid {
           circle(x + this.cellSize / 2, y + this.cellSize / 2, this.cellSize * 0.4);
         }
       }
+    }
+  }
+
+  // Adiciona uma conexão (linha) entre duas células
+  addConnection(row1, col1, row2, col2) {
+    if (!this.inBounds(row1, col1) || !this.inBounds(row2, col2)) {
+      return;
+    }
+    const distance = Math.abs(row1 - row2) + Math.abs(col1 - col2);
+    if (distance !== 1) {
+      return;
+    }
+    const key = this.getConnectionKey(row1, col1, row2, col2);
+    this.connections.add(key);
+  }
+
+  // Remove uma conexão entre duas células
+  removeConnection(row1, col1, row2, col2) {
+    const key = this.getConnectionKey(row1, col1, row2, col2);
+    this.connections.delete(key);
+  }
+
+  // Verifica se existe conexão entre duas células
+  hasConnection(row1, col1, row2, col2) {
+    const key = this.getConnectionKey(row1, col1, row2, col2);
+    return this.connections.has(key);
+  }
+
+  // Limpa todas as conexões
+  clearConnections() {
+    this.connections.clear();
+  }
+
+  // Retorna chave única para uma conexão (ordem normalizada)
+  getConnectionKey(row1, col1, row2, col2) {
+    const key1 = `${row1}-${col1}`;
+    const key2 = `${row2}-${col2}`;
+    return key1 < key2 ? `${key1}|${key2}` : `${key2}|${key1}`;
+  }
+
+  // Renderiza as linhas de conexão
+  renderConnections() {
+    stroke(255, 255, 255);
+    strokeWeight(4);
+
+    for (const connection of this.connections) {
+      const [key1, key2] = connection.split('|');
+      const [row1, col1] = key1.split('-').map(Number);
+      const [row2, col2] = key2.split('-').map(Number);
+
+      // Calcula o centro das células
+      const x1 = col1 * this.cellSize + this.cellSize / 2;
+      const y1 = row1 * this.cellSize + this.cellSize / 2;
+      const x2 = col2 * this.cellSize + this.cellSize / 2;
+      const y2 = row2 * this.cellSize + this.cellSize / 2;
+
+      line(x1, y1, x2, y2);
     }
   }
 

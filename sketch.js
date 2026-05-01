@@ -88,9 +88,10 @@ function setup() {
   grid = new Grid(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
   randomizeGrid();
 
-  gridmap = new GridMap(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
+  gridmap = new AlgorithmGrid(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
   gridmap.setMarker(2,2);
   gridmap.setLineShade(2, 2, 8, 0.5)
+  gridmap.addConnection(2, 2, 2, 3);
 
   // Cria sliders.
   sizeSlider = createSlider(CELL_SIZE_MIN, CELL_SIZE_MAX, CELL_SIZE_DEFAULT, 1);
