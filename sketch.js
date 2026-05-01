@@ -24,6 +24,17 @@ const CANVAS_HEIGHT = GRID_MAX_HEIGHT;
 const LEGEND_X = GRID_MAX_WIDTH + UI_PADDING;
 const LEGEND_Y = UI_PADDING;
 
+// Pesos de expansão por terreno (0-1)
+const TERRAIN_WEIGHTS = {
+  0: 0.0,    // intransponível - não expande
+  1: 0.3,    // areia - expande pouco
+  2: 0.5,    // atoleiro - expande moderadamente
+  3: 0.8,    // água - expande bastante
+};
+const PROPAGATION_SEEDS_MIN = 5;
+const PROPAGATION_SEEDS_MAX = 15;
+const PROPAGATION_ITERATIONS = 4;
+
 // Estado global do sketch.
 let grid;
 let gridmap;
@@ -34,15 +45,19 @@ let colSlider;
 let container;
 let resetBtn;
 let randomBtn;
+let propagateBtn;
 
 // Atualiza o tamanho das celulas quando o slider muda.
 function updateCellSize() {
   grid.setCellSize(sizeSlider.value());
+  gridmap.setCellSize(sizeSlider.value());
 }
 
 // Atualiza o numero de linhas/colunas do grid.
 function updateGridDimensions() {
   grid.resize(rowSlider.value(), colSlider.value());
+  gridmap.resize(rowSlider.value(), colSlider.value());
+  onResetClick();
 }
 
 // Aplica um padrao espacial baseado em (linha + coluna).
@@ -56,17 +71,60 @@ function fillGridPattern() {
 
 // Botões e funções de controle.
 function onResetClick() {
-  // TODO: Implementar reset do grid
+  // Verificar se há espaço suficiente para 2 bolinhas
+  const totalCells = grid.rows * grid.cols;
+  if (totalCells < 2) {
+    return;
+  }
+
+  let pos1Valid = false;
+  let pos2Valid = false;
+  let row1, col1, row2, col2;
+  let attempts = 0;
+  const maxAttempts = 1000;
+
+  // Encontrar 2 posições válidas (não intransponíveis e diferentes)
+  while ((!pos1Valid || !pos2Valid) && attempts < maxAttempts) {
+    if (!pos1Valid) {
+      row1 = Math.floor(Math.random() * grid.rows);
+      col1 = Math.floor(Math.random() * grid.cols);
+      if (grid.getElement(row1, col1).value !== 0) {
+        pos1Valid = true;
+      }
+    }
+
+    if (!pos2Valid) {
+      row2 = Math.floor(Math.random() * grid.rows);
+      col2 = Math.floor(Math.random() * grid.cols);
+      if (grid.getElement(row2, col2).value !== 0 &&
+          !(row2 === row1 && col2 === col1)) {
+        pos2Valid = true;
+      }
+    }
+
+    attempts += 1;
+  }
+
+  if (pos1Valid && pos2Valid) {
+    gridmap.setMarkerStartPosition(row1, col1);
+    gridmap.setFruitPosition(row2, col2);
+  }
 }
 
 function onRandomClick() {
-  randomizeGrid();
+  random_original();
+  onResetClick();
 }
 
-function randomizeGrid() {
+function onPropagateClick() {
+  randomizeGridWithPropagation();
+  onResetClick();
+}
+
+function random_original() {
   for (let r = 0; r < grid.rows; r += 1) {
     for (let c = 0; c < grid.cols; c += 1) {
-      const randomValue = Math.floor(Math.random() * 10);
+      const randomValue = Math.floor(Math.random() * 4);
       grid.setElement(r, c, randomValue);
     }
   }
@@ -88,6 +146,58 @@ function syncGridValues() {
   }
 }
 
+// Random com propagação de terrenos
+function randomizeGridWithPropagation() {
+  // Fase 1: Limpar grid
+  for (let r = 0; r < grid.rows; r += 1) {
+    for (let c = 0; c < grid.cols; c += 1) {
+      grid.setElement(r, c, 0);
+    }
+  }
+
+  // Criar seeds aleatórias (apenas 1-3, sem intransponível)
+  const numSeeds = Math.floor(Math.random() * (PROPAGATION_SEEDS_MAX - PROPAGATION_SEEDS_MIN + 1)) + PROPAGATION_SEEDS_MIN;
+  for (let i = 0; i < numSeeds; i += 1) {
+    const r = Math.floor(Math.random() * grid.rows);
+    const c = Math.floor(Math.random() * grid.cols);
+    const value = Math.floor(Math.random() * 3) + 1; // 1-3 (sem intransponível)
+    grid.setElement(r, c, value);
+  }
+
+  // Fase 2: Propagação
+  for (let iteration = 0; iteration < PROPAGATION_ITERATIONS; iteration += 1) {
+    const newCells = [];
+    for (let r = 0; r < grid.rows; r += 1) {
+      for (let c = 0; c < grid.cols; c += 1) {
+        const currentValue = grid.getElement(r, c).value;
+        if (currentValue === 0) continue;
+
+        const weight = TERRAIN_WEIGHTS[currentValue] || 0;
+        const neighbors = [
+          [r - 1, c],
+          [r + 1, c],
+          [r, c - 1],
+          [r, c + 1],
+        ];
+
+        for (const [nr, nc] of neighbors) {
+          if (!grid.inBounds(nr, nc)) continue;
+          if (grid.getElement(nr, nc).value !== 0) continue;
+          if (Math.random() < weight) {
+            newCells.push([nr, nc, currentValue]);
+          }
+        }
+      }
+    }
+
+    for (const [r, c, value] of newCells) {
+      grid.setElement(r, c, value);
+    }
+  }
+
+  syncGridValues();
+}
+
 // Configuracao inicial do p5.
 function setup() {
   // Container para posicionar canvas e sliders.
@@ -102,33 +212,12 @@ function setup() {
 
   // Cria o grid.
   grid = new Grid(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
-  randomizeGrid();
+  random_original();
 
   gridmap = new AlgorithmGrid(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
-  gridmap.setMarkerStartPosition(2, 2);
 
   // Sincroniza valores do grid principal
   syncGridValues();
-
-  // Criar um percurso maior em forma de retângulo
-  gridmap.addConnection(2, 2, 2, 3);
-  gridmap.addConnection(2, 3, 2, 4);
-  gridmap.addConnection(2, 4, 2, 5);
-  gridmap.addConnection(2, 5, 3, 5);
-  gridmap.addConnection(3, 5, 4, 5);
-  gridmap.addConnection(4, 5, 5, 5);
-  gridmap.addConnection(5, 5, 5, 4);
-  gridmap.addConnection(5, 4, 5, 3);
-  gridmap.addConnection(5, 3, 5, 2);
-  gridmap.addConnection(5, 2, 4, 2);
-  gridmap.addConnection(4, 2, 3, 2);
-  gridmap.addConnection(3, 2, 2, 2);
-
-  // Shade nos caminhos
-  gridmap.setLineShade(2, 2, 5, 0.2);
-  gridmap.setColumnShade(2, 5, 5, 0.2);
-  gridmap.setLineShade(5, 2, 5, 0.2);
-  gridmap.setColumnShade(3, 4, 2, 0.2);
 
   gridmap.setMarkerSpeed(0.05);
 
@@ -160,18 +249,21 @@ function setup() {
   // Cria botões de controle.
   resetBtn = createButton("Reset");
   randomBtn = createButton("Random");
+  propagateBtn = createButton("Propagate");
 
   // Coloca botões dentro do container.
   resetBtn.parent(container);
   randomBtn.parent(container);
+  propagateBtn.parent(container);
 
   // Posiciona botões na area da legenda.
   const buttonsY = LEGEND_Y + LEGEND_ROW_GAP * 3 + 15;
   resetBtn.position(LEGEND_X, buttonsY);
   randomBtn.position(LEGEND_X, buttonsY + BUTTON_HEIGHT + BUTTON_GAP);
+  propagateBtn.position(LEGEND_X, buttonsY + (BUTTON_HEIGHT + BUTTON_GAP) * 2);
 
   // Estila botões.
-  [resetBtn, randomBtn].forEach(btn => {
+  [resetBtn, randomBtn, propagateBtn].forEach(btn => {
     btn.style("width", `${BUTTON_WIDTH}px`);
     btn.style("height", `${BUTTON_HEIGHT}px`);
     btn.style("background-color", "#4CAF50");
@@ -187,6 +279,10 @@ function setup() {
   // Liga eventos dos botões.
   resetBtn.mousePressed(onResetClick);
   randomBtn.mousePressed(onRandomClick);
+  propagateBtn.mousePressed(onPropagateClick);
+
+  // Aleatoriza grid e posições das bolinhas na inicialização
+  onRandomClick();
 }
 
 // Loop de renderizacao.

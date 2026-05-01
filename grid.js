@@ -8,12 +8,10 @@ class Cell {
   // Escolhe uma cor base a partir do valor da celula.
   getBaseColor() {
     const palette = [
-      color(235, 235, 240),
-      color(70, 160, 240),
-      color(255, 120, 120),
-      color(120, 220, 160),
-      color(240, 200, 90),
-      color(170, 150, 240),
+      color(0x1B, 0x1A, 0x1A), // intransponível
+      color(0xE9, 0xB8, 0x72), // areia
+      color(0xE2, 0x98, 0x49), // atoleiro
+      color(0x64, 0x94, 0xAA), // água
     ];
     const index = ((this.value % palette.length) + palette.length) % palette.length;
     return palette[index];
@@ -170,6 +168,8 @@ class AlgorithmGrid extends Grid {
     this.markerPrevCol = -1;
     this.markerProgress = 0;
     this.markerBaseSpeed = 0.05;
+    this.fruitRow = -1;
+    this.fruitCol = -1;
   }
 
   // Renderiza os filtros, marcadores e linhas de conexão
@@ -196,7 +196,7 @@ class AlgorithmGrid extends Grid {
   }
 
   renderMarkers() {
-    // Renderiza bolinha na posição interpolada se há movimento
+    // Primeira bolinha em movimento (vermelho - comida)
     const x1 = this.markerCol * this.cellSize + this.cellSize / 2;
     const y1 = this.markerRow * this.cellSize + this.cellSize / 2;
     const x2 = this.markerNextCol * this.cellSize + this.cellSize / 2;
@@ -208,6 +208,16 @@ class AlgorithmGrid extends Grid {
     fill(255, 50, 50);
     noStroke();
     circle(x, y, this.cellSize * 0.4);
+
+    // Fruta estática (verde) - só renderiza se posição for válida
+    if (this.fruitRow >= 0 && this.fruitCol >= 0 &&
+        this.inBounds(this.fruitRow, this.fruitCol)) {
+      const fruitX = this.fruitCol * this.cellSize + this.cellSize / 2;
+      const fruitY = this.fruitRow * this.cellSize + this.cellSize / 2;
+      fill(100, 255, 100);
+      noStroke();
+      circle(fruitX, fruitY, this.cellSize * 0.4);
+    }
   }
 
   renderCells() {
@@ -405,6 +415,14 @@ class AlgorithmGrid extends Grid {
       this.markerNextRow = row;
       this.markerNextCol = col;
       this.markerProgress = 0;
+    }
+  }
+
+  // Define a posição da fruta
+  setFruitPosition(row, col) {
+    if (this.inBounds(row, col)) {
+      this.fruitRow = row;
+      this.fruitCol = col;
     }
   }
 }
