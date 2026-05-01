@@ -46,6 +46,7 @@ let container;
 let resetBtn;
 let randomBtn;
 let propagateBtn;
+let algorithmBtn1, algorithmBtn2, algorithmBtn3, algorithmBtn4;
 
 // Atualiza o tamanho das celulas quando o slider muda.
 function updateCellSize() {
@@ -71,6 +72,10 @@ function fillGridPattern() {
 
 // Botões e funções de controle.
 function onResetClick() {
+  // Limpar todas as conexões e efeitos de shade
+  gridmap.clearConnections();
+  gridmap.clearAllShade();
+
   // Verificar se há espaço suficiente para 2 bolinhas
   const totalCells = grid.rows * grid.cols;
   if (totalCells < 2) {
@@ -121,6 +126,28 @@ function onPropagateClick() {
   onResetClick();
 }
 
+function onAlgorithm1Click() {
+  console.log("Algoritmo 1 clicado");
+  // TODO: Implementar algoritmo 1
+}
+
+function onAlgorithm2Click() {
+  console.log("Algoritmo 2 clicado");
+  // TODO: Implementar algoritmo 2
+}
+
+function onAlgorithm3Click() {
+  console.log("Algoritmo 3 clicado");
+  // TODO: Implementar algoritmo 3
+}
+
+function onAlgorithm4Click() {
+  console.log("Algoritmo 4 clicado");
+  // TODO: Implementar algoritmo 4
+}
+
+
+// Função de random que nao usa propagação, para comparação. Gera valores aleatórios entre 0 e 3 para cada célula do grid.
 function random_original() {
   for (let r = 0; r < grid.rows; r += 1) {
     for (let c = 0; c < grid.cols; c += 1) {
@@ -134,6 +161,9 @@ function random_original() {
 }
 
 // Copia os valores do grid principal para o gridmap
+// deixa ele atualizado para computar coisas tipo a velocidade de propagação e custo de terreno corretamente
+// se tiver algum gargalo de desempenho, podemos otimizar essa função para só copiar os valores que mudaram, ou usar um sistema de eventos para atualizar apenas as células que foram alteradas
+// ou simplesmente deixar apenas um grid, ja que ambos estão com mesmo valores so mudando o render, mas por enquanto vamos manter os dois grids separados para ter mais flexibilidade no futuro
 function syncGridValues() {
   for (let r = 0; r < grid.rows; r += 1) {
     for (let c = 0; c < grid.cols; c += 1) {
@@ -165,6 +195,8 @@ function randomizeGridWithPropagation() {
   }
 
   // Fase 2: Propagação
+  // basicamente olha para todos os vizinhos de cada célula e decide aleatoriamente se expande o valor
+  //  da célula para o vizinho, baseado no peso do terreno (TERRAIN_WEIGHTS)
   for (let iteration = 0; iteration < PROPAGATION_ITERATIONS; iteration += 1) {
     const newCells = [];
     for (let r = 0; r < grid.rows; r += 1) {
@@ -219,6 +251,7 @@ function setup() {
   // Sincroniza valores do grid principal
   syncGridValues();
 
+  // velocidade inicial do marcador (bolinha) - pode ser ajustada dinamicamente pelos algoritmos
   gridmap.setMarkerSpeed(0.05);
 
   // Cria sliders.
@@ -247,20 +280,42 @@ function setup() {
   colSlider.input(updateGridDimensions);
 
   // Cria botões de controle.
+  // ------------------------
+  // Botão para resetar o grid e as posições das bolinhas, apenas
   resetBtn = createButton("Reset");
+  // Botão para gerar um novo grid aleatório sem propagação, para comparação
   randomBtn = createButton("Random");
+  // Botão para gerar um novo grid aleatório usando propagação, para comparação
   propagateBtn = createButton("Propagate");
+
+  // TODO:
+  // Botões para rodar os algoritmos de pathfinding (ainda sem implementação)
+  algorithmBtn1 = createButton("Algoritmo 1");
+  algorithmBtn2 = createButton("Algoritmo 2");
+  algorithmBtn3 = createButton("Algoritmo 3");
+  algorithmBtn4 = createButton("Algoritmo 4");
 
   // Coloca botões dentro do container.
   resetBtn.parent(container);
   randomBtn.parent(container);
   propagateBtn.parent(container);
+  algorithmBtn1.parent(container);
+  algorithmBtn2.parent(container);
+  algorithmBtn3.parent(container);
+  algorithmBtn4.parent(container);
 
   // Posiciona botões na area da legenda.
   const buttonsY = LEGEND_Y + LEGEND_ROW_GAP * 3 + 15;
   resetBtn.position(LEGEND_X, buttonsY);
   randomBtn.position(LEGEND_X, buttonsY + BUTTON_HEIGHT + BUTTON_GAP);
   propagateBtn.position(LEGEND_X, buttonsY + (BUTTON_HEIGHT + BUTTON_GAP) * 2);
+
+  // Botões de algoritmos em segunda coluna
+  const algoX = LEGEND_X + BUTTON_WIDTH + BUTTON_GAP;
+  algorithmBtn1.position(algoX, buttonsY);
+  algorithmBtn2.position(algoX, buttonsY + BUTTON_HEIGHT + BUTTON_GAP);
+  algorithmBtn3.position(algoX, buttonsY + (BUTTON_HEIGHT + BUTTON_GAP) * 2);
+  algorithmBtn4.position(algoX, buttonsY + (BUTTON_HEIGHT + BUTTON_GAP) * 3);
 
   // Estila botões.
   [resetBtn, randomBtn, propagateBtn].forEach(btn => {
@@ -276,16 +331,36 @@ function setup() {
     btn.style("transition", "background-color 0.3s");
   });
 
+  // Estila botões de algoritmos com cor diferente
+  [algorithmBtn1, algorithmBtn2, algorithmBtn3, algorithmBtn4].forEach(btn => {
+    btn.style("width", `${BUTTON_WIDTH}px`);
+    btn.style("height", `${BUTTON_HEIGHT}px`);
+    btn.style("background-color", "#2196F3");
+    btn.style("color", "white");
+    btn.style("border", "none");
+    btn.style("border-radius", "4px");
+    btn.style("font-size", "12px");
+    btn.style("font-weight", "bold");
+    btn.style("cursor", "pointer");
+    btn.style("transition", "background-color 0.3s");
+  });
+
   // Liga eventos dos botões.
   resetBtn.mousePressed(onResetClick);
   randomBtn.mousePressed(onRandomClick);
   propagateBtn.mousePressed(onPropagateClick);
+  algorithmBtn1.mousePressed(onAlgorithm1Click);
+  algorithmBtn2.mousePressed(onAlgorithm2Click);
+  algorithmBtn3.mousePressed(onAlgorithm3Click);
+  algorithmBtn4.mousePressed(onAlgorithm4Click);
 
   // Aleatoriza grid e posições das bolinhas na inicialização
   onRandomClick();
 }
 
 // Loop de renderizacao.
+// dependendo de como for chamada a execução dos algoritmos, talvez seja necessário ajustar a lógica de 
+// renderização para mostrar o progresso dos algoritmos em tempo real, ou simplesmente mostrar o resultado final após a execução
 function draw() {
   background(240);
   // Renderiza o grid.
