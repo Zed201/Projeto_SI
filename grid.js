@@ -411,4 +411,48 @@ class AlgorithmGrid extends Grid {
       this.fruitCol = col;
     }
   }
+  
+  // Sobrescreve `resize` para garantir que `AlgorithmGrid` sempre use instâncias de `CellMap`
+  resize(newRows, newCols) {
+    super.resize(newRows, newCols);
+
+    // Garante que cada célula seja um `CellMap` (preservando `value` quando presente)
+    for (let r = 0; r < this.rows; r += 1) {
+      for (let c = 0; c < this.cols; c += 1) {
+        const cell = this.cells[r][c];
+        if (!(cell instanceof CellMap)) {
+          const newCell = new CellMap(false, 0);
+          if (cell && typeof cell.value !== 'undefined') newCell.value = cell.value;
+          this.cells[r][c] = newCell;
+        }
+      }
+    }
+
+    // Remove conexões que ficaram fora dos limites após o redimensionamento
+    this.connections = this.connections.filter(connection => {
+      const [key1, key2] = connection.split('|');
+      const [r1, c1] = key1.split('-').map(Number);
+      const [r2, c2] = key2.split('-').map(Number);
+      return this.inBounds(r1, c1) && this.inBounds(r2, c2);
+    });
+
+    // Ajusta (clampa) posições do marcador e da fruta para dentro dos limites, ou redefine se inválidas
+    const clamp = (v, max) => Math.max(0, Math.min(max - 1, v));
+    if (!this.inBounds(this.markerRow, this.markerCol)) {
+      this.markerRow = clamp(this.markerRow, this.rows);
+      this.markerCol = clamp(this.markerCol, this.cols);
+    }
+    if (!this.inBounds(this.markerNextRow, this.markerNextCol)) {
+      this.markerNextRow = clamp(this.markerNextRow, this.rows);
+      this.markerNextCol = clamp(this.markerNextCol, this.cols);
+    }
+    if (!this.inBounds(this.markerPrevRow, this.markerPrevCol)) {
+      this.markerPrevRow = -1;
+      this.markerPrevCol = -1;
+    }
+    if (!this.inBounds(this.fruitRow, this.fruitCol)) {
+      this.fruitRow = -1;
+      this.fruitCol = -1;
+    }
+  }
 }

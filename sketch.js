@@ -154,7 +154,15 @@ function onAlgorithm4Click() {
 }
 
 function onAlgorithm5Click() {
-  console.log("Busca A* ainda não implementada");
+  gridmap.clearConnections();
+  gridmap.clearAllShade();
+  if (gridmap.fruitRow === -1) return;
+
+  currentAlgorithm = new AStar(
+    gridmap,
+    gridmap.markerRow, gridmap.markerCol,
+    gridmap.fruitRow, gridmap.fruitCol
+  );
 }
 
 function random_original() {
