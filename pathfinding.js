@@ -3,9 +3,7 @@
 // ============================================================================
 // Esta classe fornece a estrutura base para implementar diferentes algoritmos
 // de busca (BFS, DFS, Dijkstra, A*, etc). Cada algoritmo específico deve
-// estender esta classe e implementar o método search().
-
-// NAO TESTADO APENAS UMA IDEIA
+// estender esta classe e implementar o método step().
 
 class PathfindingAlgorithm {
   constructor(grid_algorith, startRow, startCol, goalRow, goalCol) {
@@ -29,6 +27,9 @@ class PathfindingAlgorithm {
     // Usado para renderizar visualização de expansão
     this.frontier = [];
 
+    // Dicionário para rastrear o caminho { "row-col": [parentRow, parentCol] }
+    this.parentMap = {};
+
     // Status da busca
     this.completed = false;
     this.pathFound = false;
@@ -37,17 +38,20 @@ class PathfindingAlgorithm {
     this.steps = 0;           // Número de iterações
     this.nodesExplored = 0;   // Quantidade de células exploradas
     this.executionTime = 0;   // Tempo em ms
+
+    // Inicializa a fronteira com a posição de início para o passo a passo
+    this.frontier.push([startRow, startCol]);
   }
 
   // ========================================================================
   // MÉTODO ABSTRATO - DEVE SER IMPLEMENTADO POR CADA ALGORITMO
   // ========================================================================
 
-  search() {
-    // IMPLEMENTAR: Lógica específica de busca
+  step() {
+    // IMPLEMENTAR: Lógica específica de busca passo a passo
     // Deve preencher: this.path, this.visited, this.frontier
     // E definir: this.completed = true, this.pathFound = (resultado)
-    throw new Error("search() deve ser implementado pela subclasse");
+    throw new Error("step() deve ser implementado pela subclasse");
   }
 
   // ========================================================================
@@ -138,51 +142,17 @@ class PathfindingAlgorithm {
 
     while (current) {
       path.unshift(current);
+      
+      // Condição de parada: chegou no nó inicial
+      if (current[0] === this.startRow && current[1] === this.startCol) {
+        break;
+      }
+      
       const key = `${current[0]}-${current[1]}`;
       current = parent[key] || null;
     }
 
+    this.path = path;
     return path;
   }
-
-  // ========================================================================
-  // TEMPLATE PARA IMPLEMENTAÇÃO DE ALGORITMOS
-  // ========================================================================
-
-  /*
-  TEMPLATE DE IMPLEMENTAÇÃO:
-
-  search() {
-    const startTime = performance.now();
-
-    // 1. INICIALIZAR ESTRUTURAS
-    // - Queue/Stack para fronteira
-    // - Set para visitados
-    // - Dicionário para rastrear caminho
-
-    // 2. LOOP PRINCIPAL
-    // while (fronteira não vazia) {
-    //   - Pop/dequeue nó da fronteira
-    //   - Se é o objetivo, reconstruir caminho e retornar
-    //   - Se não visitado, marcar como visitado
-    //   - Adicionar vizinhos à fronteira
-    //   - Contar passos
-    // }
-
-    // 3. FINALIZAR
-    this.completed = true;
-    this.executionTime = performance.now() - startTime;
-    this.nodesExplored = this.visited.length;
-  }
-
-  VARIAÇÕES POR ALGORITMO:
-  
-  - BFS: Usar Queue, explora camada por camada
-  - DFS: Usar Stack, explora profundidade primeiro
-  - Dijkstra: Usar Priority Queue ordenada por distância acumulada
-  - A*: Usar Priority Queue com f(n) = g(n) + h(n)
-    - g(n) = custo real do caminho
-    - h(n) = heurística (Manhattan ou Euclidiana)
-  - Greedy: Usar Priority Queue apenas com heurística h(n)
-  */
 }

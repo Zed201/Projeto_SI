@@ -46,22 +46,25 @@ let container;
 let resetBtn;
 let randomBtn;
 let propagateBtn;
-let algorithmBtn1, algorithmBtn2, algorithmBtn3, algorithmBtn4;
 
-// Atualiza o tamanho das celulas quando o slider muda.
+// Agora temos 5 botões para os 5 algoritmos da atividade!
+let algorithmBtn1, algorithmBtn2, algorithmBtn3, algorithmBtn4, algorithmBtn5;
+
+// *** VARIÁVEIS DO SISTEMA DE JOGO ***
+let currentAlgorithm = null;
+let foodsCollected = 0;
+
 function updateCellSize() {
   grid.setCellSize(sizeSlider.value());
   gridmap.setCellSize(sizeSlider.value());
 }
 
-// Atualiza o numero de linhas/colunas do grid.
 function updateGridDimensions() {
   grid.resize(rowSlider.value(), colSlider.value());
   gridmap.resize(rowSlider.value(), colSlider.value());
   onResetClick();
 }
 
-// Aplica um padrao espacial baseado em (linha + coluna).
 function fillGridPattern() {
   for (let r = 0; r < grid.rows; r += 1) {
     for (let c = 0; c < grid.cols; c += 1) {
@@ -70,17 +73,13 @@ function fillGridPattern() {
   }
 }
 
-// Botões e funções de controle.
 function onResetClick() {
-  // Limpar todas as conexões e efeitos de shade
   gridmap.clearConnections();
   gridmap.clearAllShade();
+  currentAlgorithm = null; 
 
-  // Verificar se há espaço suficiente para 2 bolinhas
   const totalCells = grid.rows * grid.cols;
-  if (totalCells < 2) {
-    return;
-  }
+  if (totalCells < 2) return;
 
   let pos1Valid = false;
   let pos2Valid = false;
@@ -88,25 +87,20 @@ function onResetClick() {
   let attempts = 0;
   const maxAttempts = 1000;
 
-  // Encontrar 2 posições válidas (não intransponíveis e diferentes)
   while ((!pos1Valid || !pos2Valid) && attempts < maxAttempts) {
     if (!pos1Valid) {
       row1 = Math.floor(Math.random() * grid.rows);
       col1 = Math.floor(Math.random() * grid.cols);
-      if (grid.getElement(row1, col1).value !== 0) {
-        pos1Valid = true;
-      }
+      if (grid.getElement(row1, col1).value !== 0) pos1Valid = true;
     }
 
     if (!pos2Valid) {
       row2 = Math.floor(Math.random() * grid.rows);
       col2 = Math.floor(Math.random() * grid.cols);
-      if (grid.getElement(row2, col2).value !== 0 &&
-          !(row2 === row1 && col2 === col1)) {
+      if (grid.getElement(row2, col2).value !== 0 && !(row2 === row1 && col2 === col1)) {
         pos2Valid = true;
       }
     }
-
     attempts += 1;
   }
 
@@ -127,76 +121,74 @@ function onPropagateClick() {
 }
 
 function onAlgorithm1Click() {
-  console.log("Algoritmo 1 clicado");
-  // TODO: Implementar algoritmo 1
+  gridmap.clearConnections();
+  gridmap.clearAllShade();
+  if (gridmap.fruitRow === -1) return;
+
+  currentAlgorithm = new BFS(
+    gridmap,
+    gridmap.markerRow, gridmap.markerCol,
+    gridmap.fruitRow, gridmap.fruitCol
+  );
 }
 
 function onAlgorithm2Click() {
-  console.log("Algoritmo 2 clicado");
-  // TODO: Implementar algoritmo 2
+  console.log("Busca em Profundidade (DFS) ainda não implementada");
 }
 
 function onAlgorithm3Click() {
-  console.log("Algoritmo 3 clicado");
-  // TODO: Implementar algoritmo 3
+  console.log("Custo Uniforme ainda não implementado");
 }
 
 function onAlgorithm4Click() {
-  console.log("Algoritmo 4 clicado");
-  // TODO: Implementar algoritmo 4
+  gridmap.clearConnections();
+  gridmap.clearAllShade();
+  if (gridmap.fruitRow === -1) return;
+
+  // Inicia a BUSCA GULOSA
+  currentAlgorithm = new Greedy(
+    gridmap,
+    gridmap.markerRow, gridmap.markerCol,
+    gridmap.fruitRow, gridmap.fruitCol
+  );
 }
 
+function onAlgorithm5Click() {
+  console.log("Busca A* ainda não implementada");
+}
 
-// Função de random que nao usa propagação, para comparação. Gera valores aleatórios entre 0 e 3 para cada célula do grid.
 function random_original() {
   for (let r = 0; r < grid.rows; r += 1) {
     for (let c = 0; c < grid.cols; c += 1) {
-      const randomValue = Math.floor(Math.random() * 4);
-      grid.setElement(r, c, randomValue);
+      grid.setElement(r, c, Math.floor(Math.random() * 4));
     }
   }
-  if (gridmap) {
-    syncGridValues();
-  }
+  if (gridmap) syncGridValues();
 }
 
-// Copia os valores do grid principal para o gridmap
-// deixa ele atualizado para computar coisas tipo a velocidade de propagação e custo de terreno corretamente
-// se tiver algum gargalo de desempenho, podemos otimizar essa função para só copiar os valores que mudaram, ou usar um sistema de eventos para atualizar apenas as células que foram alteradas
-// ou simplesmente deixar apenas um grid, ja que ambos estão com mesmo valores so mudando o render, mas por enquanto vamos manter os dois grids separados para ter mais flexibilidade no futuro
 function syncGridValues() {
   for (let r = 0; r < grid.rows; r += 1) {
     for (let c = 0; c < grid.cols; c += 1) {
       const value = grid.getElement(r, c).value;
       const cell = gridmap.getElement(r, c);
-      if (cell) {
-        cell.value = value;
-      }
+      if (cell) cell.value = value;
     }
   }
 }
 
-// Random com propagação de terrenos
 function randomizeGridWithPropagation() {
-  // Fase 1: Limpar grid
   for (let r = 0; r < grid.rows; r += 1) {
-    for (let c = 0; c < grid.cols; c += 1) {
-      grid.setElement(r, c, 0);
-    }
+    for (let c = 0; c < grid.cols; c += 1) grid.setElement(r, c, 0);
   }
 
-  // Criar seeds aleatórias (apenas 1-3, sem intransponível)
   const numSeeds = Math.floor(Math.random() * (PROPAGATION_SEEDS_MAX - PROPAGATION_SEEDS_MIN + 1)) + PROPAGATION_SEEDS_MIN;
   for (let i = 0; i < numSeeds; i += 1) {
     const r = Math.floor(Math.random() * grid.rows);
     const c = Math.floor(Math.random() * grid.cols);
-    const value = Math.floor(Math.random() * 3) + 1; // 1-3 (sem intransponível)
+    const value = Math.floor(Math.random() * 3) + 1;
     grid.setElement(r, c, value);
   }
 
-  // Fase 2: Propagação
-  // basicamente olha para todos os vizinhos de cada célula e decide aleatoriamente se expande o valor
-  //  da célula para o vizinho, baseado no peso do terreno (TERRAIN_WEIGHTS)
   for (let iteration = 0; iteration < PROPAGATION_ITERATIONS; iteration += 1) {
     const newCells = [];
     for (let r = 0; r < grid.rows; r += 1) {
@@ -205,97 +197,67 @@ function randomizeGridWithPropagation() {
         if (currentValue === 0) continue;
 
         const weight = TERRAIN_WEIGHTS[currentValue] || 0;
-        const neighbors = [
-          [r - 1, c],
-          [r + 1, c],
-          [r, c - 1],
-          [r, c + 1],
-        ];
+        const neighbors = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]];
 
         for (const [nr, nc] of neighbors) {
           if (!grid.inBounds(nr, nc)) continue;
           if (grid.getElement(nr, nc).value !== 0) continue;
-          if (Math.random() < weight) {
-            newCells.push([nr, nc, currentValue]);
-          }
+          if (Math.random() < weight) newCells.push([nr, nc, currentValue]);
         }
       }
     }
-
-    for (const [r, c, value] of newCells) {
-      grid.setElement(r, c, value);
-    }
+    for (const [r, c, value] of newCells) grid.setElement(r, c, value);
   }
-
   syncGridValues();
 }
 
-// Configuracao inicial do p5.
 function setup() {
-  // Container para posicionar canvas e sliders.
   container = createDiv();
   container.style("position", "relative");
   container.style("width", `${CANVAS_WIDTH}px`);
   container.style("height", `${CANVAS_HEIGHT}px`);
 
-  // Canvas fixo com area extra para a legenda lateral.
   const canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
   canvas.parent(container);
 
-  // Cria o grid.
   grid = new Grid(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
   random_original();
 
   gridmap = new AlgorithmGrid(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
-
-  // Sincroniza valores do grid principal
   syncGridValues();
-
-  // velocidade inicial do marcador (bolinha) - pode ser ajustada dinamicamente pelos algoritmos
   gridmap.setMarkerSpeed(0.05);
 
-  // Cria sliders.
   sizeSlider = createSlider(CELL_SIZE_MIN, CELL_SIZE_MAX, CELL_SIZE_DEFAULT, 1);
   rowSlider = createSlider(GRID_ROWS_MIN, GRID_ROWS_MAX, GRID_ROWS_DEFAULT, 1);
   colSlider = createSlider(GRID_COLS_MIN, GRID_COLS_MAX, GRID_COLS_DEFAULT, 1);
 
-  // Coloca sliders dentro do container.
   sizeSlider.parent(container);
   rowSlider.parent(container);
   colSlider.parent(container);
 
-  // Posiciona sliders na area da legenda.
   colSlider.position(LEGEND_X + LEGEND_LABEL_OFFSET, LEGEND_Y);
   rowSlider.position(LEGEND_X + LEGEND_LABEL_OFFSET, LEGEND_Y + LEGEND_ROW_GAP);
   sizeSlider.position(LEGEND_X + LEGEND_LABEL_OFFSET, LEGEND_Y + LEGEND_ROW_GAP * 2);
 
-  // Define largura dos sliders.
   colSlider.style("width", "140px");
   rowSlider.style("width", "140px");
   sizeSlider.style("width", "140px");
 
-  // Liga eventos dos sliders.
   sizeSlider.input(updateCellSize);
   rowSlider.input(updateGridDimensions);
   colSlider.input(updateGridDimensions);
 
-  // Cria botões de controle.
-  // ------------------------
-  // Botão para resetar o grid e as posições das bolinhas, apenas
   resetBtn = createButton("Reset");
-  // Botão para gerar um novo grid aleatório sem propagação, para comparação
   randomBtn = createButton("Random");
-  // Botão para gerar um novo grid aleatório usando propagação, para comparação
   propagateBtn = createButton("Propagate");
+  
+  // Nomes corretos para os botões exigidos na atividade
+  algorithmBtn1 = createButton("BFS (Largura)");
+  algorithmBtn2 = createButton("DFS (Profund.)");
+  algorithmBtn3 = createButton("Custo Uniforme");
+  algorithmBtn4 = createButton("Gulosa");
+  algorithmBtn5 = createButton("A*");
 
-  // TODO:
-  // Botões para rodar os algoritmos de pathfinding (ainda sem implementação)
-  algorithmBtn1 = createButton("Algoritmo 1");
-  algorithmBtn2 = createButton("Algoritmo 2");
-  algorithmBtn3 = createButton("Algoritmo 3");
-  algorithmBtn4 = createButton("Algoritmo 4");
-
-  // Coloca botões dentro do container.
   resetBtn.parent(container);
   randomBtn.parent(container);
   propagateBtn.parent(container);
@@ -303,21 +265,20 @@ function setup() {
   algorithmBtn2.parent(container);
   algorithmBtn3.parent(container);
   algorithmBtn4.parent(container);
+  algorithmBtn5.parent(container); // Novo botão
 
-  // Posiciona botões na area da legenda.
   const buttonsY = LEGEND_Y + LEGEND_ROW_GAP * 3 + 15;
   resetBtn.position(LEGEND_X, buttonsY);
   randomBtn.position(LEGEND_X, buttonsY + BUTTON_HEIGHT + BUTTON_GAP);
   propagateBtn.position(LEGEND_X, buttonsY + (BUTTON_HEIGHT + BUTTON_GAP) * 2);
 
-  // Botões de algoritmos em segunda coluna
   const algoX = LEGEND_X + BUTTON_WIDTH + BUTTON_GAP;
   algorithmBtn1.position(algoX, buttonsY);
   algorithmBtn2.position(algoX, buttonsY + BUTTON_HEIGHT + BUTTON_GAP);
   algorithmBtn3.position(algoX, buttonsY + (BUTTON_HEIGHT + BUTTON_GAP) * 2);
   algorithmBtn4.position(algoX, buttonsY + (BUTTON_HEIGHT + BUTTON_GAP) * 3);
+  algorithmBtn5.position(algoX, buttonsY + (BUTTON_HEIGHT + BUTTON_GAP) * 4); // Novo botão
 
-  // Estila botões.
   [resetBtn, randomBtn, propagateBtn].forEach(btn => {
     btn.style("width", `${BUTTON_WIDTH}px`);
     btn.style("height", `${BUTTON_HEIGHT}px`);
@@ -328,11 +289,9 @@ function setup() {
     btn.style("font-size", "14px");
     btn.style("font-weight", "bold");
     btn.style("cursor", "pointer");
-    btn.style("transition", "background-color 0.3s");
   });
 
-  // Estila botões de algoritmos com cor diferente
-  [algorithmBtn1, algorithmBtn2, algorithmBtn3, algorithmBtn4].forEach(btn => {
+  [algorithmBtn1, algorithmBtn2, algorithmBtn3, algorithmBtn4, algorithmBtn5].forEach(btn => {
     btn.style("width", `${BUTTON_WIDTH}px`);
     btn.style("height", `${BUTTON_HEIGHT}px`);
     btn.style("background-color", "#2196F3");
@@ -342,10 +301,8 @@ function setup() {
     btn.style("font-size", "12px");
     btn.style("font-weight", "bold");
     btn.style("cursor", "pointer");
-    btn.style("transition", "background-color 0.3s");
   });
 
-  // Liga eventos dos botões.
   resetBtn.mousePressed(onResetClick);
   randomBtn.mousePressed(onRandomClick);
   propagateBtn.mousePressed(onPropagateClick);
@@ -353,31 +310,112 @@ function setup() {
   algorithmBtn2.mousePressed(onAlgorithm2Click);
   algorithmBtn3.mousePressed(onAlgorithm3Click);
   algorithmBtn4.mousePressed(onAlgorithm4Click);
+  algorithmBtn5.mousePressed(onAlgorithm5Click); // Evento do novo botão
 
-  // Aleatoriza grid e posições das bolinhas na inicialização
   onRandomClick();
 }
 
-// Loop de renderizacao.
-// dependendo de como for chamada a execução dos algoritmos, talvez seja necessário ajustar a lógica de 
-// renderização para mostrar o progresso dos algoritmos em tempo real, ou simplesmente mostrar o resultado final após a execução
 function draw() {
   background(240);
-  // Renderiza o grid.
-  grid.render();
-  gridmap.updateMarker();
+  grid.render(); 
+
+  // =========================================================
+  // MOTOR DE ANIMAÇÃO DA BUSCA E DO CAMINHO
+  // =========================================================
+  if (currentAlgorithm) {
+    
+    // ESTÁGIO 1: A BUSCA AINDA ESTÁ RODANDO
+    if (!currentAlgorithm.completed) {
+      
+      // Controla a velocidade (1 passo a cada 3 frames)
+      if (frameCount % 3 === 0) { 
+        currentAlgorithm.step();
+      }
+
+      gridmap.clearAllShade();
+      
+      // Visitados (Sombra Média)
+      for (const vKey of currentAlgorithm.visited) {
+        const [r, c] = vKey.split('-').map(Number);
+        gridmap.setShade(r, c, 0.4);
+      }
+      
+      // Fronteira (Sombra Escura)
+      for (const [r, c] of currentAlgorithm.frontier) {
+        gridmap.setShade(r, c, 0.7);
+      }
+    } 
+    
+    // ESTÁGIO 2: BUSCA TERMINOU E ENCONTROU A COMIDA
+    else if (currentAlgorithm.pathFound) {
+      const path = currentAlgorithm.path;
+      
+      // Limpa as sombras cinzas de visitados/fronteira para dar destaque ao caminho
+      gridmap.clearAllShade(); 
+
+      // Renderiza o fundo amarelo translúcido por todo o caminho descoberto
+      fill(255, 215, 0, 150); // Amarelo com transparência
+      noStroke();
+      for (const [r, c] of path) {
+        rect(c * gridmap.cellSize, r * gridmap.cellSize, gridmap.cellSize, gridmap.cellSize);
+      }
+
+      // Se as conexões (linhas brancas) ainda não foram criadas, cria agora
+      if (gridmap.connections.length === 0 && path.length > 0) {
+        for (let i = 0; i < path.length - 1; i++) {
+          gridmap.addConnection(path[i][0], path[i][1], path[i+1][0], path[i+1][1]);
+        }
+        // Força a bolinha a atualizar seu estado inicial para começar a andar
+        gridmap.markerProgress = 1; 
+      }
+
+      // Executa o movimento do agente (bolinha) pelo caminho
+      gridmap.updateMarker();
+    }
+  }
+
+  // =========================================================
+  // SISTEMA DE COLISÃO E REINÍCIO (Passos 9 e 10)
+  // =========================================================
+  
+  if (gridmap.fruitRow !== -1 && 
+      Math.round(gridmap.markerRow) === gridmap.fruitRow && 
+      Math.round(gridmap.markerCol) === gridmap.fruitCol &&
+      currentAlgorithm && currentAlgorithm.completed) { 
+    
+    foodsCollected++;               
+    gridmap.clearConnections();     
+    currentAlgorithm = null;        
+    
+    let posValid = false;
+    let r, c;
+    while (!posValid) {
+      r = Math.floor(Math.random() * grid.rows);
+      c = Math.floor(Math.random() * grid.cols);
+      if (grid.getElement(r, c).value !== 0 && !(r === Math.round(gridmap.markerRow) && c === Math.round(gridmap.markerCol))) {
+        posValid = true;
+      }
+    }
+    gridmap.setFruitPosition(r, c);
+  }
+
   gridmap.render();
 
-  // Desenha a area da legenda lateral.
+  // =========================================================
+  // INTERFACE DE USUÁRIO (Legenda)
+  // =========================================================
   noStroke();
   fill(245);
   rect(GRID_MAX_WIDTH, 0, LEGEND_WIDTH, CANVAS_HEIGHT);
 
-  // Desenha os textos de legenda.
   fill(0);
   textSize(14);
   textAlign(LEFT, TOP);
   text(`Cols: ${colSlider.value()}`, LEGEND_X, LEGEND_Y);
   text(`Rows: ${rowSlider.value()}`, LEGEND_X, LEGEND_Y + LEGEND_ROW_GAP);
   text(`Size: ${sizeSlider.value()}`, LEGEND_X, LEGEND_Y + LEGEND_ROW_GAP * 2);
+
+  textSize(16);
+  fill(40, 150, 40);
+  text(`Comidas Coletadas: ${foodsCollected}`, LEGEND_X, LEGEND_Y + LEGEND_ROW_GAP * 8);
 }
