@@ -417,5 +417,4 @@ function draw() {
 
   textSize(16);
   fill(40, 150, 40);
-  text(`Comidas Coletadas: ${foodsCollected}`, LEGEND_X, LEGEND_Y + LEGEND_ROW_GAP * 8);
 }
