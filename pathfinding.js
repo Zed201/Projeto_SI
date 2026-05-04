@@ -50,7 +50,7 @@ class PathfindingAlgorithm {
   step() {
     // IMPLEMENTAR: Lógica específica de busca passo a passo
     // Deve preencher: this.path, this.visited, this.frontier
-    // E definir: this.completed = true, this.pathFound = (resultado)
+    // E definir: this.completed = true, this.pathFound = (resultado)(opcional, pois o caso opte por usar a funcao reconstructPath, ja define certo)
     throw new Error("step() deve ser implementado pela subclasse");
   }
 

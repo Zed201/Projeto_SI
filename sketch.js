@@ -120,6 +120,7 @@ function onPropagateClick() {
   onResetClick();
 }
 
+// BFS
 function onAlgorithm1Click() {
   gridmap.clearConnections();
   gridmap.clearAllShade();
@@ -140,6 +141,7 @@ function onAlgorithm3Click() {
   console.log("Custo Uniforme ainda não implementado");
 }
 
+// Gulosa
 function onAlgorithm4Click() {
   gridmap.clearConnections();
   gridmap.clearAllShade();
@@ -153,6 +155,7 @@ function onAlgorithm4Click() {
   );
 }
 
+// A*
 function onAlgorithm5Click() {
   gridmap.clearConnections();
   gridmap.clearAllShade();
