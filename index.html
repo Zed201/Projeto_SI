@@ -1,15 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.1/p5.min.js"></script>
   <meta charset="utf-8" />
-  <title>Projeto 3 SI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pathfinder SI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.1/p5.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: linear-gradient(145deg, #e8eeff 0%, #f4f6ff 60%, #eaf5ff 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 32px 16px 52px;
+      font-family: 'Nunito', 'Segoe UI', sans-serif;
+    }
+
+    .app-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 22px;
+      user-select: none;
+    }
+
+    .app-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: #3730a3;
+      line-height: 1;
+    }
+
+    .app-subtitle {
+      font-size: 0.75rem;
+      letter-spacing: 3px;
+      color: #a5b4fc;
+      text-transform: uppercase;
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    #canvas-wrap {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(99, 102, 241, 0.15),
+        0 4px 6px rgba(99, 102, 241, 0.06),
+        0 16px 48px rgba(99, 102, 241, 0.12),
+        0 32px 64px rgba(0, 0, 0, 0.1);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 4px;
+      background: #e0e7ff;
+      outline: none;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #6366f1;
+      cursor: pointer;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+
+    input[type="range"]:hover::-webkit-slider-thumb {
+      background: #4f46e5;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      background: #e0e7ff;
+      border-radius: 4px;
+    }
+
+    button {
+      font-family: 'Nunito', 'Segoe UI', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      transition: filter 0.12s ease, transform 0.1s ease, box-shadow 0.12s ease;
+    }
+
+    button:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    button:active {
+      filter: brightness(0.92);
+      transform: translateY(0);
+      box-shadow: none;
+    }
+  </style>
 </head>
 <body>
+  <div class="app-header">
+    <h1 class="app-title">Pathfinder</h1>
+    <p class="app-subtitle">Visualizador de Algoritmos de Busca — Sistemas Inteligentes</p>
+  </div>
+  <div id="canvas-wrap"></div>
   <script src="grid.js"></script>
   <script src="pathfinding.js"></script>
-  <script src="bfs.js"></script>
-  <script src="greedy.js"></script>
+  <script src="algorithms/bfs.js"></script>
+  <script src="algorithms/dfs.js"></script>
+  <script src="algorithms/greedy.js"></script>
+  <script src="algorithms/custo_uniforme.js"></script>
   <script src="sketch.js"></script>
 </body>
 </html>
