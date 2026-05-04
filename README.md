@@ -7,6 +7,8 @@ Um sistema interativo de visualização de algoritmos em grid com geração proc
 
 [Link p5js](https://editor.p5js.org/Zed201/full/TEh66YGh0)
 
+[Link deepwiki](https://deepwiki.com/Zed201/Projeto_SI)
+
 ## Conceitos Principais
 
 ### 1. **Terrenos e Cores**
