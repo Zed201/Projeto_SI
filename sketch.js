@@ -424,7 +424,20 @@ function draw() {
         for (let i = 0; i < path.length - 1; i++) {
           gridmap.addConnection(path[i][0], path[i][1], path[i+1][0], path[i+1][1]);
         }
-        gridmap.markerProgress = 1;
+
+        // Alinha o estado do marcador ao caminho recém-gerado.
+        // Garante que o marcador comece no primeiro nó do caminho e tenha o próximo nó corretamente definido para iniciar o movimento.
+        gridmap.setMarkerStartPosition(path[0][0], path[0][1]);
+        if (path.length > 1) {
+          gridmap.markerNextRow = path[1][0];
+          gridmap.markerNextCol = path[1][1];
+          gridmap.markerProgress = 0;
+        } else {
+          // Caminho com único nó: mantém o marcador parado no destino
+          gridmap.markerNextRow = path[0][0];
+          gridmap.markerNextCol = path[0][1];
+          gridmap.markerProgress = 0;
+        }
       }
 
       gridmap.updateMarker();
