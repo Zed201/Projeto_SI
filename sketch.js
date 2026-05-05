@@ -316,7 +316,7 @@ function setup() {
   gridmap = new AlgorithmGrid(GRID_ROWS_DEFAULT, GRID_COLS_DEFAULT, CELL_SIZE_DEFAULT);
   random_original();
   syncGridValues();
-  gridmap.setMarkerSpeed(0.05);
+  gridmap.setMarkerSpeed(0.35);
 
   // Sliders
   colSlider  = createSlider(GRID_COLS_MIN, GRID_COLS_MAX, GRID_COLS_DEFAULT, 1);
@@ -568,20 +568,6 @@ function drawPanel() {
 
   // ── Algoritmos ──
   sectionLabel('ALGORITMOS DE BUSCA', px, PY_ALGO_HDR);
-
-  // Badge "em breve" apenas para A* (ainda não implementado)
-  const unimplementedY = [PY_ALGO5];
-  for (const by of unimplementedY) {
-    fill(238, 240, 255);
-    noStroke();
-    rect(px + PANEL_INN_W - 62, by + 8, 60, 18, 4);
-    fill(148, 163, 184);
-    textSize(10);
-    textStyle(NORMAL);
-    textAlign(CENTER, TOP);
-    text('em breve', px + PANEL_INN_W - 32, by + 11);
-    textAlign(LEFT, TOP);
-  }
 
   // ── Divisor 5 ──
   panelDivider(PY_DIV5);
